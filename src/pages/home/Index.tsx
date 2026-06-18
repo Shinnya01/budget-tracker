@@ -86,7 +86,9 @@ export function HomePage() {
         setPaylaters(
           Array.from(
             new Map(
-              paylaterItems.map((item) => [item.id ?? `${item.name}-${item.due}`, item]),
+              paylaterItems.map(
+                (item) => [item.id ?? `${item.name}-${item.months}-${item.totalAmount}`, item],
+              ),
             ).values(),
           ),
         )
