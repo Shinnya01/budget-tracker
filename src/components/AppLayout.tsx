@@ -23,7 +23,7 @@ export function AppLayout() {
       </main>
 
       <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur">
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-5 gap-0">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
@@ -31,7 +31,7 @@ export function AppLayout() {
               end={item.path === "/"}
               className={({ isActive }) =>
                 [
-                  "app-nav-link flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1 text-center text-sm font-medium transition-colors",
+                  "app-nav-link flex flex-col items-center justify-center gap-0 rounded-2xl px-2 py-1 text-center text-sm font-medium transition-colors",
                   isActive
                     ? "text-blue-600"
                     : "text-slate-500 hover:text-slate-700",
@@ -39,7 +39,7 @@ export function AppLayout() {
               }
             >
               <item.icon className="nav-icon h-5 w-5" strokeWidth={2} />
-              <span>{item.label}</span>
+              <span className="text-2xs">{item.label}</span>
             </NavLink>
           ))}
         </div>
