@@ -1,11 +1,47 @@
+import { useEffect, useState } from "react"
 import { MoreVertical, Plus, ShoppingBag } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { db, type OrderRecord } from "@/lib/localDb"
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
 
 function OrdersPage() {
+  const [orders, setOrders] = useState<OrderRecord[]>([])
+  const totalReserved = orders.reduce(
+    (sum, order) => sum + (order.amount ?? order.reserved ?? order.saved),
+    0,
+  )
+
+  useEffect(() => {
+    let active = true
+
+    const loadOrders = async () => {
+      const items = await db.orders.orderBy("id").toArray()
+      const uniqueItems = Array.from(
+        new Map(items.map((item) => [item.id ?? item.name, item])).values(),
+      )
+
+      if (active) {
+        setOrders(uniqueItems)
+      }
+    }
+
+    void loadOrders()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
     <section className="page space-y-5" id="orders">
       <div className="flex items-start justify-between gap-4">
@@ -32,31 +68,45 @@ function OrdersPage() {
       <Card className="">
         <CardContent className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Reserved
-              </p>
-              <p className="text-2xl font-semibold tracking-tight text-slate-900">
-                ₱4,250.00
-              </p>
-              <p className="text-xs text-muted-foreground">
-                From 3 active orders
-              </p>
-            </div>
+            {orders.length > 0 ? (
+              <>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Order Amount
+                  </p>
+                  <p className="text-2xl font-semibold tracking-tight text-slate-900">
+                    {formatCurrency(totalReserved)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    From {orders.length} active orders
+                  </p>
+                </div>
 
-            <div className="rounded-lg bg-slate-100 p-3 text-slate-700">
-              <ShoppingBag className="h-5 w-5" />
-            </div>
+                <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
+                  <ShoppingBag className="h-5 w-5" />
+                </div>
+              </>
+            ) : (
+              <div className="flex w-full items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Order Amount
+                  </p>
+                  <p className="text-2xl font-semibold tracking-tight text-slate-900">
+                    {formatCurrency(0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    No active orders yet
+                  </p>
+                </div>
+
+                <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
+                  <ShoppingBag className="h-5 w-5" />
+                </div>
+              </div>
+            )}
           </div>
 
-          <Separator className="bg-slate-200" />
-
-          <div className="space-y-3">
-            <p className="text-xs font-bold tracking-wide text-slate-900">
-              Overall progress
-            </p>
-            <Progress value={62} className="h-2 bg-slate-200 mt-1" />
-          </div>
         </CardContent>
       </Card>
 
@@ -97,63 +147,48 @@ function OrdersPage() {
 
       <Card className="p-0">
         <CardContent className="p-0">
-          {[
-            {
-              name: "Mechanical Keyboard",
-              target: "₱3,500.00",
-              saved: "₱1,200.00 saved (34%)",
-              progress: 34,
-              due: "Jun 28",
-            },
-            {
-              name: "iPhone 15 Case",
-              target: "₱850.00",
-              saved: "₱500.00 saved (59%)",
-              progress: 59,
-              due: "Jul 5",
-            },
-            {
-              name: "Monitor Stand",
-              target: "₱1,500.00",
-              saved: "₱300.00 saved (20%)",
-              progress: 20,
-              due: "Jul 15",
-            },
-          ].map((order, index, items) => (
-            <div key={order.name}>
-              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-start gap-3 p-4">
-                <div className="size-17 shrink-0 rounded-md border border-dashed border-slate-200 bg-slate-50" />
+          {orders.length > 0 ? (
+            orders.map((order, index, items) => (
+              <div key={order.id ?? `${order.name}-${index}`}>
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-start gap-3 p-4">
+                  <div className="size-17 shrink-0 rounded-md border border-dashed border-blue-200 bg-blue-50" />
 
-                <div className="min-w-0 space-y-2">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold">{order.name}</p>
-                    <p className="text-2xs text-muted-foreground">Target: {order.target}</p>
+                  <div className="min-w-0 space-y-2">
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold">{order.name}</p>
+                      <p className="text-xl font-semibold tracking-tight text-slate-900">
+                        {formatCurrency(order.amount ?? order.reserved ?? order.saved)}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Progress value={order.progress} className="h-2 bg-slate-200" />
-                    <p className="text-2xs font-semibold text-muted-foreground">{order.saved}</p>
-                  </div>
+                  <button
+                    type="button"
+                    className="shrink-0"
+                    aria-label="More actions"
+                  >
+                    <MoreVertical className="h-3 w-3 text-muted-foreground" />
+                  </button>
                 </div>
 
-                <div className="space-y-1 text-right">
-                  <p className="text-2xs text-muted-foreground">Due {order.due}</p>
-                </div>
-
-                <button
-                  type="button"
-                  className="shrink-0"
-                  aria-label="More actions"
-                >
-                  <MoreVertical className="h-3 w-3 text-muted-foreground" />
-                </button>
+                {index < items.length - 1 ? (
+                  <Separator className="bg-slate-200" />
+                ) : null}
               </div>
-
-              {index < items.length - 1 ? (
-                <Separator className="bg-slate-200" />
-              ) : null}
+            ))
+          ) : (
+            <div className="px-4 py-6 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                <ShoppingBag className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-medium text-slate-900">
+                No active orders
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Add a new order to start tracking progress.
+              </p>
             </div>
-          ))}
+          )}
         </CardContent>
       </Card>
 

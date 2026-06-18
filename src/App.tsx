@@ -1,12 +1,18 @@
+import { useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
-import { HomePage } from "./pages/HomePage";
+import { HomePage } from "./pages/home/Index";
 import OrdersPage from "./pages/OrdersPage";
 import ExpensesPage from "./pages/ExpensesPage";
 import SavingsPage from "./pages/SavingsPage";
 import SettingsPage from "./pages/SettingsPage";
+import { seedLocalDatabase } from "./lib/localDb";
 
 export default function App() {
+  useEffect(() => {
+    void seedLocalDatabase()
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>
